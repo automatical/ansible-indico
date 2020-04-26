@@ -1,0 +1,7 @@
+---
+dependencies:
+  - role: geerlingguy.postgresql
+  - role: cchurch.virtualenv
+  - role: cchurch.uwsgi
+  - role: davidwittman.redis
+  - role: 0x0i.systemd

@@ -1,0 +1,64 @@
+# Create Indico Database User
+- name: Create a new database with name "indico"
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: indico
+    password: aiDa3poephahV4buye0Woh0odohzoo2W
+    expires: infinity
+
+# Create Indico Database
+- name: Create a new database with name "indico"
+  become: yes
+  become_user: postgres
+  postgresql_db:
+    name: indico
+    owner: indico
+
+# Enable PostgreSQL Extensions
+- name: Enable unaccent PostgreSQL Extension
+  become: yes
+  become_user: postgres
+  postgresql_ext:
+    name: unaccent
+    db: indico
+    state: present
+
+- name: Enable pg_trgm PostgreSQL Extension
+  become: yes
+  become_user: postgres
+  postgresql_ext:
+    name: pg_trgm
+    db: indico
+    state: present
+
+- name: Virtualenv Bootstrap file
+  template:
+    src: venv_exec.sh.j2
+    dest: /srv/www/indico/.venv/exec
+    mode: 0755
+    owner: indico
+    group: www-data
+
+- name: Clone / Update Indico Deployment
+  become_user: indico
+  git:
+    repo: 'https://github.com/automatical/temp-indico.git'
+    dest: /srv/www/indico/application
+    force: true
+
+- name: Setup Indico Database
+  become_user: indico
+  command: /srv/www/indico/.venv/exec indico db prepare
+  args:
+    chdir: /srv/www/indico/application
+  environment:
+    INDICO_CONFIG: /srv/www/indico/application/.indico.conf
+
+- name: Enable Celery Service
+  systemd:
+    state: started
+    name: indico-celery
+
+- name: Ensure Indico Permissions
+  command: find /srv/www/indico -exec chmod 0775 {} \;

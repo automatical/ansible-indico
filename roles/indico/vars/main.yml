@@ -1,0 +1,51 @@
+# PostgreSQL
+postgresql_version: 9.6
+
+# Redis
+redis_bind: 127.0.0.1
+redis_port: 6379
+
+# Indico uwsgi configuration
+uwsgi_vassals:
+  - name: indico
+    plugin: python
+    single-interpreter: true
+    chdir: /srv/www/indico/application
+    module: /srv/www/indico/application/web/indico.wsgi
+    stats: /srv/www/indico/application/web/uwsgi-stats.sock
+    wsgi-file: /srv/www/indico/application/web/indico.wsgi
+    home: /srv/www/indico/.venv
+    virtualenv: /srv/www/indico/.venv
+    protocol: uwsgi
+    processes: 1
+    socket: 127.0.0.1:8000
+    uid: indico
+    gid: www-data
+    master: true
+    disable-logging: false
+
+# Indico Virtualenv
+virtualenv_python: /usr/bin/python
+virtualenv_path: /srv/www/indico/.venv
+virtualenv_pre_packages:
+  - name: indico
+virtualenv_user: indico
+
+# Indico Celery
+unit_config:
+  - name: "indico-celery"
+    Unit:
+      Description: Indico Celery Service
+      After: network.target
+    Service:
+      ExecStart: /srv/www/indico/.venv/bin/indico celery worker -B
+      Restart: always
+      SyslogIdentifier: indico-celery
+      User: indico
+      Group: www-data
+      UMask: 0027
+      Type: simple
+      KillMode: mixed
+      TimeoutStopSec: 300
+    Install:
+      WantedBy: multi-user.target

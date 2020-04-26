@@ -1,0 +1,80 @@
+-
+  hosts: all
+  user: vagrant
+  become: true
+
+  pre_tasks:
+    # Create Indico Linux User
+    - name: Create indico user, member of www-data group
+      user:
+        name: indico
+        comment: Indico Conference Management User
+        group: www-data
+        home: /srv/www/indico
+
+    - name: Ensure indico directory exists
+      file:
+        path: /srv/www/indico
+        state: directory
+        owner: indico
+        group: www-data
+        mode: '0755'
+
+    - name: Install Python pip
+      apt:
+        update_cache: true
+        name: python-pip
+        state: present
+    
+    - name: Install Python psycopg2 module
+      apt:
+        name: python-psycopg2
+        state: present
+
+    - name: Install build-essential
+      apt:
+        name: build-essential
+        state: present
+    
+    - name: Install python-dev
+      apt:
+        name: libpython-dev
+        state: present
+    
+    - name: Install PostgreSQL development package, required for python postgresql package
+      apt:
+        name: postgresql-server-dev-all
+        state: present
+
+    - name: Create self-signed certificates
+      file:
+        path: /etc/tls
+        state: directory
+    - copy:
+        content: "-----BEGIN CERTIFICATE-----\nMIIDATCCAemgAwIBAgIJAMGQlDiUEp2IMA0GCSqGSIb3DQEBBQUAMBcxFTATBgNV\nBAMMDGluZGljby5sb2NhbDAeFw0yMDA0MjYxMzQ3NTRaFw0zMDA0MjQxMzQ3NTRa\nMBcxFTATBgNVBAMMDGluZGljby5sb2NhbDCCASIwDQYJKoZIhvcNAQEBBQADggEP\nADCCAQoCggEBALUfxpw1phxLM3c8l6w+tubMxavbTDZKU+xFgMdTpQl/Fm3G8JF2\n3i/CRp6r98HK4wlJo0i8nMr61gDJjJqiqlcSo4x5sOj4nz2aswanhzd3nPaDHrgg\nzNYr7XmI4S7er5AtDNg8HJpSMBA5184qnbI9NNjY59xrTbQR1wc1oKQiDVY7c0yh\nzZp5IV2xKkv825OOq1hktw4hpQpER9ykQHyiSfDAk7us37knEutShHdy/6uhLzDw\nQGOFwQccGoJnaD7UG7IvgDJ6nzG0lNKoAsmz2v3QYcyz1EjLVbDOYuBjZREmiMau\nqsKFWc+t8dpVLPsdryNY17OKdYfQlf1zvgMCAwEAAaNQME4wHQYDVR0OBBYEFG7l\nhj9LBUEkUtrbCxBfbmqBkDDhMB8GA1UdIwQYMBaAFG7lhj9LBUEkUtrbCxBfbmqB\nkDDhMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADggEBAC3j/wlkTbKnu+DN\nrPHdRCebGlQvj4fuilnDTT7FOP2Nu4txmdY0b9yLYHBQ5AIqTgNPH0TAvOjod87R\n8IVtvQAINFGJaO9ly3oz+NEtTxrquCR3aJYBea0+aZjGc1eULL3pxXa5PtGheuNc\ntc6f3qWzTxfXSV/P/sbxM93rAyn/M1S5TvjF2hQS79dNs/KkXNNGf85V8rQ0Isyd\nNH+a+XJBcwTREY0aoEUcNZYR7Xv38paJsgCbZ3YDi6CKr+7NciTgg0jDVRWjRa0k\n7LlMcfDQfhAp7NIYXuXXaeC/3O1mBKASlQCKDZRs0FtOz1o7WmZaPDSPpWNIyMKl\nOdtz/LQ=\n-----END CERTIFICATE-----\n"
+        dest: /etc/tls/indico.local.crt
+    - copy:
+        content: "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAtR/GnDWmHEszdzyXrD625szFq9tMNkpT7EWAx1OlCX8Wbcbw\nkXbeL8JGnqv3wcrjCUmjSLycyvrWAMmMmqKqVxKjjHmw6PifPZqzBqeHN3ec9oMe\nuCDM1ivteYjhLt6vkC0M2DwcmlIwEDnXziqdsj002Njn3GtNtBHXBzWgpCINVjtz\nTKHNmnkhXbEqS/zbk46rWGS3DiGlCkRH3KRAfKJJ8MCTu6zfuScS61KEd3L/q6Ev\nMPBAY4XBBxwagmdoPtQbsi+AMnqfMbSU0qgCybPa/dBhzLPUSMtVsM5i4GNlESaI\nxq6qwoVZz63x2lUs+x2vI1jXs4p1h9CV/XO+AwIDAQABAoIBAD+kbrEs2LVQZ0Ea\ndWD8mF/4y+xbHihlbZ+zvFBNv8vacBMauCUk02WMqivO2TurAqOc0Fcajy1zfgbA\nyzr6tUfrMLSHffYehjWrSgSokQaYbPrhj8W7IL6QqNzvj9BcRuwuKDlCxfojrufE\nq2Ox7b9Xal5XuQDmY2NGcXwDB/Mju/mOzggZ4DZR//iEBLPFpEG8mlBJxH1PSLiZ\nCSLU4aJMEqM9fqRhfbfqbGUWg1OmwLtnX69KBhQ5zirDehMKKICc5iBHDCATYmHH\n0rOYj+sRN/9LtKtKy0DlVksWG9jQCfPl3r4UmiTeZQJedc45Y8/kwBQzOgbkVqKG\nVuAyY+ECgYEA7ERXnE0GhdSxhtDyfHj2IoS5BlKbhVShWjx4mzz13r76HJL0D/1D\nA99S+oY+8aROgL4aRyyKs2g5RKj3035O1g6nMw8G/yKvpoAx3NmmehSlTOmYCRYx\nKQZhLGBFqFMMl+5Xo5+iQf5oUNJIUjPDtoc9e5TdH0/G9yJgHx/iZ+UCgYEAxEBq\nq5DWuuWjbRNv9TJ43vOFmjUCdbnQn2HxL4mxFtJy5QZ2ia5+HNjN3cq91duc3Yfq\n1czh0oxl2aeKGVHeAyZJvN4+HGWTiZmyKQQKyeagJv9S2YCTwr3lCM3W3sK+9Up5\nqnSyOfhElyTvP7n3DG13WNq1Xrgua92rPCPbX8cCgYBxQQVaGBYTWvRKMqi5/+XE\ngCiNHlYMYJgDwE7z4xHc12DfB5ZUf8t69Lc6/dT4UhGLZxUDnxdRjpk9D13UlIxH\n0bhWIlLxQ/g88OB2BCLoDDN8ndDSMkAYcUVtVyys1jqILaj29xN5XPE2JMakGMot\nGcDgF2izlLNETccTxF3r/QKBgFPbwrj09wx9u8uMFrcLjiKWpGw0YoyzjbXNQCY0\nC/vYiUfb7yL98N2atr0jOOL9KJZw0aPyHDy/yXWr5ZLULK3j2nZd8ORpcxXFGx/z\nnjiP17dSOrC+BGWehxOwATTGuppN7JctrkqfD5AWNDVi3XHuBKVvLzj+MrfczKKy\nH7dZAoGBALMIblcixk+xdr1Ps0szJDsJa+wKsHqVJCW/DLL2lW6atd/xtHEoyK/p\n+3rlbrIZAXiGb0hBgigUVd/VWTzIaypFaMXKZVzkB+tc8Xt2nmNUPgo5ajQPuItl\nHvf+t1rdE029MkKstrScfgDNe+y3wLxjVihT9EGQvPbjwIy8cKzP\n-----END RSA PRIVATE KEY-----\n"
+        dest: /etc/tls/indico.local.key
+    - copy:
+        content: ''
+        dest: /etc/tls/indico.local.chain.crt
+
+    # Ensure proxy-uwsgi Apache module exists
+    - name: Install uwsgi apache module
+      apt:
+        name: libapache2-mod-proxy-uwsgi
+        state: present
+
+    # Ensure xsendfile Apache module exists
+    - name: Install xsendfile apache module
+      apt:
+        name: libapache2-mod-xsendfile
+        state: present
+
+  vars_files:
+    - group_vars/webapps.yml
+
+  roles:
+    - { role: geerlingguy.apache }
+    - { role: ./roles/indico }

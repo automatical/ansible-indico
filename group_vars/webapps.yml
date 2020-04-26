@@ -1,0 +1,38 @@
+# Apache
+apache_state: started
+apache_listen_port: 80
+
+apache_vhosts:
+  - servername: "indico.local"
+    documentroot: "/srv/www/indico"
+    extra_parameters: |
+      RewriteEngine On
+      RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=302,L]
+
+apache_vhosts_ssl:
+  - servername: "indico.local"
+    documentroot: "/srv/www/indico"
+    certificate_file: "/etc/tls/indico.local.crt"
+    certificate_key_file: "/etc/tls/indico.local.key"
+    extra_parameters: |
+      XSendFile on
+      XSendFilePath /srv/www/indico/.venv
+      LogLevel error
+      ServerSignature Off
+
+      AliasMatch "^/(images|fonts)(.*)/(.+?)(__v[0-9a-f]+)?\.([^.]+)$" "/srv/www/indico/application/web/static/$1$2/$3.$5"
+      AliasMatch "^/(css|dist|images|fonts)/(.*)$" "/srv/www/indico/application/web/static/$1/$2"
+      Alias /robots.txt /srv/www/indico/application/web/static/robots.txt
+
+      SetEnv UWSGI_SCHEME https
+      ProxyPass / uwsgi://127.0.0.1:8000/
+
+apache_ssl_protocol: "All -SSLv2 -SSLv3"
+apache_ssl_cipher_suite: "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS"
+apache_mods_enabled:
+  - rewrite.load
+  - ssl.load
+  - rewrite.load
+  - proxy.load
+  - xsendfile.load
+  - proxy_uwsgi.load
